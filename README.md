@@ -2,7 +2,7 @@
 
 Uma API REST recebe eventos de negócio (como "usuário se cadastrou" ou "pedido confirmado"), coloca-os numa fila no RabbitMQ e responde na hora. Um worker consome a fila de forma assíncrona e dispara o e-mail correspondente.
 
-Quem pede a notificação não espera o e-mail sair, e nada se perde se o servidor de e-mail estiver fora do ar.
+Quem pede a notificação não espera o e-mail sair, e nenhuma mensagem aceita se perde se o servidor de e-mail estiver fora do ar.
 
 ## Como funciona
 
