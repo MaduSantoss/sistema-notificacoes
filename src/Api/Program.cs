@@ -17,6 +17,8 @@ await channel.QueueDeclareAsync(
     exclusive: false,
     autoDelete: false);
 
+var publishLock = new SemaphoreSlim(1, 1);
+
 app.MapPost("/events", async (EventoNotificacao evento) =>
 {
     var erros = new Dictionary<string, string[]>();
@@ -44,12 +46,20 @@ app.MapPost("/events", async (EventoNotificacao evento) =>
 
     var props = new BasicProperties { Persistent = true };
 
-    await channel.BasicPublishAsync(
-        exchange: string.Empty,
-        routingKey: "notificacoes",
-        mandatory: false,
-        basicProperties: props,
-        body: body);
+    await publishLock.WaitAsync();
+    try
+    {
+        await channel.BasicPublishAsync(
+            exchange: string.Empty,
+            routingKey: "notificacoes",
+            mandatory: false,
+            basicProperties: props,
+            body: body);
+    }
+    finally
+    {
+        publishLock.Release();
+    }
 
     return Results.Accepted(value: new { mensagem = "Evento recebido e enviado para a fila." });
 });
