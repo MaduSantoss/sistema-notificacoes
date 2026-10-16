@@ -1,5 +1,9 @@
 # Sistema de Notificações com Fila de Mensagens
 
+[![CI](https://github.com/MaduSantoss/sistema-notificacoes/actions/workflows/ci.yml/badge.svg)](https://github.com/MaduSantoss/sistema-notificacoes/actions/workflows/ci.yml)
+
+Uma API REST recebe eventos de negócio (como "usuário se cadastrou" ou "pedido confirmado"), ...
+
 Uma API REST recebe eventos de negócio (como "usuário se cadastrou" ou "pedido confirmado"), coloca-os numa fila no RabbitMQ e responde na hora. Um worker consome a fila de forma assíncrona e dispara o e-mail correspondente.
 
 Quem pede a notificação não espera o e-mail sair, e nenhuma mensagem aceita se perde se o servidor de e-mail estiver fora do ar.
