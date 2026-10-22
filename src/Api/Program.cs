@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
@@ -8,6 +9,7 @@ var app = builder.Build();
 
 var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
 var factory = new ConnectionFactory { HostName = rabbitHost };
+
 var connection = await factory.CreateConnectionAsync();
 var channel = await connection.CreateChannelAsync();
 
@@ -33,8 +35,11 @@ app.MapPost("/events", async (EventoNotificacao evento) =>
         if (string.IsNullOrWhiteSpace(evento.Data.Name))
             erros["data.name"] = ["O campo 'name' é obrigatório."];
 
-        if (string.IsNullOrWhiteSpace(evento.Data.Email) || !evento.Data.Email.Contains('@'))
+        if (!EmailValido(evento.Data.Email))
             erros["data.email"] = ["Informe um e-mail válido."];
+
+        if (evento.Data.Total is < 0)
+            erros["data.total"] = ["O campo 'total' não pode ser negativo."];
     }
 
     if (erros.Count > 0)
@@ -43,7 +48,6 @@ app.MapPost("/events", async (EventoNotificacao evento) =>
     var eventoComId = evento with { EventId = evento.EventId ?? Guid.NewGuid().ToString() };
     var json = JsonSerializer.Serialize(eventoComId);
     var body = Encoding.UTF8.GetBytes(json);
-
     var props = new BasicProperties { Persistent = true };
 
     await publishLock.WaitAsync();
@@ -65,3 +69,10 @@ app.MapPost("/events", async (EventoNotificacao evento) =>
 });
 
 app.Run();
+
+static bool EmailValido(string? email)
+{
+    if (string.IsNullOrWhiteSpace(email)) return false;
+    if (!MailAddress.TryCreate(email.Trim(), out var endereco)) return false;
+    return endereco.Address == email.Trim() && endereco.Host.Contains('.');
+}
