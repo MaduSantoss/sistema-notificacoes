@@ -2,8 +2,6 @@
 
 [![CI](https://github.com/MaduSantoss/sistema-notificacoes/actions/workflows/ci.yml/badge.svg)](https://github.com/MaduSantoss/sistema-notificacoes/actions/workflows/ci.yml)
 
-Uma API REST recebe eventos de negócio (como "usuário se cadastrou" ou "pedido confirmado"), ...
-
 Uma API REST recebe eventos de negócio (como "usuário se cadastrou" ou "pedido confirmado"), coloca-os numa fila no RabbitMQ e responde na hora. Um worker consome a fila de forma assíncrona e dispara o e-mail correspondente.
 
 Quem pede a notificação não espera o e-mail sair, e as mensagens que chegam à fila são gravadas em disco e reenviadas automaticamente se o servidor de e-mail estiver fora do ar.
@@ -35,6 +33,7 @@ flowchart LR
 - Mailpit como caixa de e-mail falsa para desenvolvimento
 - xUnit para testes
 - Docker e Docker Compose
+- GitHub Actions para build e testes
 
 ## Como rodar
 
@@ -79,7 +78,7 @@ O e-mail aparece no Mailpit em poucos segundos.
 | `user.registered` | `name`, `email` | Boas-vindas |
 | `order.confirmed` | `name`, `email`, `orderId`, `total` | Confirmação de pedido, com valor em reais |
 
-Tipos desconhecidos são registrados no log e descartados. Payloads inválidos (campo ausente ou e-mail sem `@`) recebem `400` e não entram na fila.
+Tipos desconhecidos são registrados no log e descartados. Payloads inválidos (campo ausente, e-mail em formato inválido ou `total` negativo) recebem `400` e não entram na fila.
 
 O campo opcional `eventId` permite que o chamador informe um identificador próprio. Se omitido, a API gera um.
 
@@ -89,7 +88,7 @@ O campo opcional `eventId` permite que o chamador informe um identificador próp
 dotnet test
 ```
 
-Os testes cobrem a montagem dos e-mails (`TemplateEmail`).
+Os testes cobrem a montagem dos e-mails (`TemplateEmail`). O workflow de CI roda o build e os testes a cada push na branch `main`.
 
 ## Estrutura
 
@@ -118,10 +117,11 @@ docker-compose.yml
 
 - Os `eventId` processados ficam em memória. Se o Consumidor reiniciar, a lista é perdida e um evento repetido pode gerar e-mail duplicado. Em produção, usar Redis ou banco de dados.
 - Mensagens em `notificacoes.falhas` não são reprocessadas automaticamente.
-- A API usa um único canal do RabbitMQ compartilhado entre requisições.
+- A API publica por um único canal do RabbitMQ, uma requisição por vez (via `SemaphoreSlim`), o que limita a vazão sob carga muito alta.
 - A validação do payload é feita à mão.
 - Há apenas um canal de notificação (e-mail) e templates em texto simples.
 - Enquanto o RabbitMQ está indisponível, a API devolve `503`. Ela se reconecta sozinha quando o broker volta, e quem chamou deve tentar de novo.
+- Projeto de estudo: usa Mailpit no lugar de um servidor de e-mail real e as credenciais padrão do RabbitMQ (`guest` / `guest`). Não é pensado para produção.
 
 ## Ideias de evolução
 
