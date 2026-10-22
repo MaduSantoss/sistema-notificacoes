@@ -121,7 +121,7 @@ docker-compose.yml
 - A API usa um único canal do RabbitMQ compartilhado entre requisições.
 - A validação do payload é feita à mão.
 - Há apenas um canal de notificação (e-mail) e templates em texto simples.
-- Enquanto o RabbitMQ está indisponível, a API devolve `500`. Ela se reconecta sozinha quando o broker volta, e quem chamou deve tentar de novo. Num sistema real, o ideal seria devolver `503`.
+- Enquanto o RabbitMQ está indisponível, a API devolve `503`. Ela se reconecta sozinha quando o broker volta, e quem chamou deve tentar de novo.
 
 ## Ideias de evolução
 

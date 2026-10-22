@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
 using Shared;
+using RabbitMQ.Client.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -59,6 +60,16 @@ app.MapPost("/events", async (EventoNotificacao evento) =>
             mandatory: false,
             basicProperties: props,
             body: body);
+    }
+    catch (Exception ex) when (ex is AlreadyClosedException
+                                    or OperationInterruptedException
+                                    or BrokerUnreachableException
+                                    or IOException
+                                    or TimeoutException)
+    {
+        return Results.Problem(
+            title: "Serviço de filas indisponível. Tente novamente em instantes.",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
     }
     finally
     {
