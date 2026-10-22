@@ -98,7 +98,6 @@ src/
   Api/          recebe eventos e publica na fila
   Consumidor/   consome a fila e envia os e-mails
   Shared/       contratos dos eventos
-  Publicador/   script simples usado na prova de conceito
 tests/
   Consumidor.Tests/
 docker-compose.yml
