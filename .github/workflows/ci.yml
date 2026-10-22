@@ -25,3 +25,6 @@ jobs:
 
       - name: Rodar testes
         run: dotnet test --no-build -c Release
+
+      - name: Construir as imagens Docker
+        run: docker compose build
